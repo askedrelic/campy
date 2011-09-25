@@ -26,37 +26,41 @@ import re
 import simplejson
 import httplib2
 import urllib
+import random
 
 from plugins import CampyPlugin
 from campy import settings
 
 class GoogleImage(CampyPlugin):
     def send_help(self, campfire, room, message, speaker):
-        help_text = """%s: Here is your help for the Google Image Search plugin:
-        gis searchstring -- Search for an image. Will return the top result. (e.g. gis cuddly bunny)
-        """ % speaker['user']['name']
+        help_text = ("""%s: Here is your help for the Google Image Search plugin:
+    gis term -- Returns the first Google Image search result ( gis cuddly bunny )
+    gis r[andom] term -- Returns a random search result ( gis random bunny )"""
+        % speaker['user']['name'])
         room.paste(help_text)
-
 
     def handle_message(self, campfire, room, message, speaker):
         body = message['body']
-        if not body:
+        if not body or not body.startswith(settings.CAMPFIRE_BOT_NAME):
             return
 
-        if not body.startswith(settings.CAMPFIRE_BOT_NAME):
-            return
-
-        m = re.match('%s: gis (?P<search_string>.*)$' % settings.CAMPFIRE_BOT_NAME, body)
+        patt = '%s: gis (?P<random_flag>r(andom)? )?(?P<search_string>.*)$' % settings.CAMPFIRE_BOT_NAME
+        m = re.match(patt, body)
         if m:
             try:
+                search_string = urllib.quote(m.groupdict().get('search_string'))
+                random_flag   = m.groupdict().get('random_flag')
                 headers, content = httplib2.Http().request(
                     "https://ajax.googleapis.com/ajax/services/search/images?safe=%s&v=1.0&q=%s" %
-                    (settings.GOOGLE_IMAGE_SAFE, urllib.quote(m.group('search_string'))))
+                    (settings.GOOGLE_IMAGE_SAFE, search_string))
                 json = simplejson.loads(content)
-                self.speak_image_url(room, json['responseData']['results'][0]['unescapedUrl'])
+                results = json['responseData']['results']
+                result_pos = 0
+                if random_flag:
+                    result_pos = random.randint(1,len(results)-1)
+                self.speak_image_url(room, results[result_pos]['unescapedUrl'])
             except (KeyError,):
                 room.speak(traceback.format_exc())
-
 
     def speak_image_url(self, room, url):
         room.speak(unicode(url))
