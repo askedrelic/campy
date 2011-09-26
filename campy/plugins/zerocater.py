@@ -78,33 +78,37 @@ def pull_zc(pullurl,show_details=True):
         meal_dates = week_box.findAll("div",{"class":"meal_date"})
         for meal_date in meal_dates: 
             meal_date_text = meal_date.getText().decode("UTF-8")
-            meal_name = meal_date.findNext("div",{"class":"meal_name collapser-container"})
-            time_name_size = meal_name.find("div",{"class":"grid_6 alpha"}).find("span")
-            timetag = time_name_size.find("span",{"class":"collapser-controller"})
-            timetag_text = str(timetag.find("span",{"class":"collapser-state "}).findNextSibling(text = True)).decode("UTF-8")
-            food = timetag.findNextSibling(text = True)
-            food_text = str(BeautifulStoneSoup(food.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
-            restaurant = food.findNextSibling("a")
-            restaurant_text = str(BeautifulStoneSoup(restaurant.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8").strip()
-            people = restaurant.findNextSibling(text = True)
-            people_text = str(BeautifulStoneSoup(people.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
-            paste_text.append(u"  %s @ %s - %s %s %s" % (meal_date_text.strip(), timetag_text.strip(), food_text.strip(), restaurant_text.strip(), people_text.strip()))
-            
-            if show_details:
-                order_items = meal_name.find("ul",{"class":"order-summary"})
-            
-                for order_item in order_items.findAll("li"):
-                    order_item_text = str(order_item.contents[0]).decode("UTF-8")
-                    paste_text.append(u"    * %s" % order_item_text.strip())
-                    #paste_text.append(repr(order_item.contents).decode("UTF-8"))
-                    #print repr(order_item)
-                    order_item_description = order_item.find("div",{"class":"item-description"})
-                    if (order_item_description is not None):
-                        order_item_description = str(BeautifulStoneSoup(order_item_description.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
-                        order_item_description = textwrap.TextWrapper(initial_indent="      ",subsequent_indent="      ", width=65).fill(order_item_description)
-                        paste_text.append(order_item_description)
-                if (order_items is not None):
-                    paste_text.append("") #add a new line after the item list for asthetics
+            meal_name = meal_date.findNext("div",{"class":re.compile(r'\bmeal_name\b')})
+            alpha_block = meal_name.find("div",{"class":"grid_6 alpha"})
+            if alpha_block is None:
+                paste_text.append(u"  %s @ %s" % (meal_date_text.strip(), str(BeautifulStoneSoup(meal_name.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")))
+            else:
+                time_name_size = meal_name.find("div",{"class":"grid_6 alpha"}).find("span")
+                timetag = time_name_size.find("span",{"class":"collapser-controller"})
+                timetag_text = str(timetag.find("span",{"class":"collapser-state "}).findNextSibling(text = True)).decode("UTF-8")
+                food = timetag.findNextSibling(text = True)
+                food_text = str(BeautifulStoneSoup(food.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
+                restaurant = food.findNextSibling("a")
+                restaurant_text = str(BeautifulStoneSoup(restaurant.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8").strip()
+                people = restaurant.findNextSibling(text = True)
+                people_text = str(BeautifulStoneSoup(people.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
+                paste_text.append(u"  %s @ %s - %s %s %s" % (meal_date_text.strip(), timetag_text.strip(), food_text.strip(), restaurant_text.strip(), people_text.strip()))
+        
+                if show_details:
+                    order_items = meal_name.find("ul",{"class":"order-summary"})
+        
+                    for order_item in order_items.findAll("li"):
+                        order_item_text = str(order_item.contents[0]).decode("UTF-8")
+                        paste_text.append(u"    * %s" % order_item_text.strip())
+                        #paste_text.append(repr(order_item.contents).decode("UTF-8"))
+                        #print repr(order_item)
+                        order_item_description = order_item.find("div",{"class":"item-description"})
+                        if (order_item_description is not None):
+                            order_item_description = str(BeautifulStoneSoup(order_item_description.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
+                            order_item_description = textwrap.TextWrapper(initial_indent="      ",subsequent_indent="      ", width=65).fill(order_item_description)
+                            paste_text.append(order_item_description)
+                    if (order_items is not None):
+                        paste_text.append("") #add a new line after the item list for asthetics
             
             
             
