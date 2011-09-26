@@ -85,7 +85,7 @@ def pull_zc(pullurl,show_details=True):
             else:
                 time_name_size = meal_name.find("div",{"class":"grid_6 alpha"}).find("span")
                 timetag = time_name_size.find("span",{"class":"collapser-controller"})
-                timetag_text = str(timetag.find("span",{"class":"collapser-state "}).findNextSibling(text = True)).decode("UTF-8")
+                timetag_text = str(timetag.find("span",{"class":re.compile(r'\bcollapser-state\b')}).findNextSibling(text = True)).decode("UTF-8")
                 food = timetag.findNextSibling(text = True)
                 food_text = str(BeautifulStoneSoup(food.string,convertEntities=BeautifulStoneSoup.HTML_ENTITIES)).decode("UTF-8")
                 restaurant = food.findNextSibling("a")
