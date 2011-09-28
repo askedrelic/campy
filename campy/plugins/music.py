@@ -31,9 +31,11 @@ from campy import settings
 class Music(CampyPlugin):
     def send_help(self, campfire, room, message, speaker):
         help_text = ("""%s: Here is your help for the music control plugin:
-    music next -- next track
-    music previous -- previous track
-    music current -- current track info"""
+    music current -- get current track info
+    music next -- skip to next track
+    music previous -- skip to previous track
+    music pause -- pause all music
+    music play [itunes|spotify] -- start playing from a specific music player"""
         % speaker['user']['name'])
         room.paste(help_text)
 
@@ -53,6 +55,10 @@ class Music(CampyPlugin):
                     player = itunes
                 elif spotify.player_state.get() == k.playing:
                     player = spotify
+                elif command == 'play itunes':
+                    itunes.play()
+                elif command == 'play spotify':
+                    spotify.play()
                 else:
                     room.speak('Nothing is playing right now, sorry :(')
                     return
@@ -61,10 +67,16 @@ class Music(CampyPlugin):
                     player.next_track()
                 elif command == 'previous':
                     player.previous_track()
+                elif command == 'pause':
+                    player.pause()
+                    return
 
-                track_name = player.current_track.name.get()
-                track_artist = player.current_track.artist.get()
-                message = 'Now playing "%s" by "%s"' % (track_name, track_artist)
-                room.speak(message)
+                self.speak_current_track(room, player)
             except (KeyError,):
                 room.speak(traceback.format_exc())
+
+    def speak_current_track(self, room, player):
+        track_name = player.current_track.name.get()
+        track_artist = player.current_track.artist.get()
+        message = 'Now playing "%s" by "%s"' % (track_name, track_artist)
+        room.speak(message)
