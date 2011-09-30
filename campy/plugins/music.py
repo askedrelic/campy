@@ -66,6 +66,8 @@ class Music(CampyPlugin):
                 if command == 'next':
                     player.next_track()
                 elif command == 'previous':
+                    # Double up to actually previous, not just restart curren track
+                    player.previous_track()
                     player.previous_track()
                 elif command == 'pause':
                     player.pause()
