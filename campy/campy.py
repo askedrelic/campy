@@ -73,9 +73,12 @@ class Campy(object):
         def errback(message):
             print message
 
-            
+        # Setup all rooms first
         for room in self.rooms:
-            room.listen(callback, errback)
+            room.listen(callback, errback, False)
+
+        # Then start listening to those rooms
+        reactor.run()
 
     def die(self):
         for room in self.rooms:
@@ -87,6 +90,8 @@ class Campy(object):
 
 if __name__ == "__main__":
     campy = Campy()
+
+    # Try to gracefully shutdown
+    reactor.addSystemEventTrigger('before','shutdown',campy.die)
+
     campy.listen()
-    reactor.run()
-    campy.die()
